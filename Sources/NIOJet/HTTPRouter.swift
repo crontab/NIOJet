@@ -10,11 +10,11 @@ import NIO
 import NIOHTTP1
 
 
-internal struct HTTPRouter<Config> {
+internal struct HTTPRouter<Globals> {
 
 	enum Callback {
-		typealias GetCallback = () async throws -> Void
-		typealias JSONCallback = (_ object: Decodable) async throws -> Void
+		typealias GetCallback = (_ handler: HTTPHandler<Globals>) async throws -> HTTPResponse
+		typealias JSONCallback = (_ handler: HTTPHandler<Globals>, _ object: Decodable) async throws -> HTTPResponse
 
 		case get(callback: GetCallback)
 		case jsonBody(type: Decodable.Type, callback: JSONCallback)
