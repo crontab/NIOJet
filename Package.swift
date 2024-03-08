@@ -15,7 +15,7 @@ let package = Package(
 
 	dependencies: [
 		.package(url: "https://github.com/apple/swift-nio.git", from: "2.64.0"),
-//		.package(url: "https://github.com/apple/swift-nio-extras.git", from: "1.11.0"),
+		.package(url: "https://github.com/apple/swift-nio-extras.git", from: "1.22.0"),
 		.package(url: "https://github.com/apple/swift-log.git", from: "1.5.4"),
 	],
 
@@ -26,6 +26,7 @@ let package = Package(
 				.product(name: "NIO", package: "swift-nio"),
 				.product(name: "NIOHTTP1", package: "swift-nio"),
 				.product(name: "NIOFoundationCompat", package: "swift-nio"),
+				.product(name: "NIOExtras", package: "swift-nio-extras"),
 				.product(name: "Logging", package: "swift-log"),
 			]
 		),
