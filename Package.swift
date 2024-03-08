@@ -11,12 +11,15 @@ let package = Package(
 
 	products: [
 		.library(name: "NIOJet", targets: ["NIOJet"]),
+		.library(name: "NIOMySQLEx", targets: ["NIOMySQLEx"]),
 	],
 
 	dependencies: [
 		.package(url: "https://github.com/apple/swift-nio.git", from: "2.64.0"),
 		.package(url: "https://github.com/apple/swift-nio-extras.git", from: "1.22.0"),
 		.package(url: "https://github.com/apple/swift-log.git", from: "1.5.4"),
+		.package(url: "https://github.com/vapor/async-kit.git", from: "1.19.0"),
+		.package(url: "https://github.com/vapor/mysql-nio.git", from: "1.7.1"),
 	],
 
 	targets: [
@@ -30,11 +33,22 @@ let package = Package(
 				.product(name: "Logging", package: "swift-log"),
 			]
 		),
-        .executableTarget(
+
+		.target(
+			name: "NIOMySQLEx",
+			dependencies: [
+				.product(name: "MySQLNIO", package: "mysql-nio"),
+				.product(name: "NIOFoundationCompat", package: "swift-nio"),
+				.product(name: "AsyncKit", package: "async-kit"),
+			]
+		),
+
+		.executableTarget(
             name: "NIOJetDemo",
 			dependencies: [
 				"NIOJet",
-			]
+			],
+			exclude: ["demo-init.sql"]
 		),
     ]
 )
