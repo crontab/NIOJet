@@ -5,6 +5,10 @@ import PackageDescription
 let package = Package(
     name: "NIOJet",
 
+	platforms: [
+		.macOS(.v10_15)
+	],
+
 	products: [
 		.library(name: "NIOJet", targets: ["NIOJet"]),
 	],
@@ -20,6 +24,8 @@ let package = Package(
 			name: "NIOJet",
 			dependencies: [
 				.product(name: "NIO", package: "swift-nio"),
+				.product(name: "NIOHTTP1", package: "swift-nio"),
+				.product(name: "NIOFoundationCompat", package: "swift-nio"),
 				.product(name: "Logging", package: "swift-log"),
 			]
 		),
