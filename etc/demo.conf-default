@@ -1,0 +1,12 @@
+
+[main]
+bind_host = localhost
+bind_port = 8080
+# bind_socket = ../var/demo.sock
+
+[db_main]
+host = 127.0.0.1
+# socket = /opt/local/var/run/mysql8/mysqld.sock
+database = niojet_demo
+user = niojet_user
+password = niojet_pw
