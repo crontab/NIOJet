@@ -18,11 +18,17 @@ public protocol HTTPServerGlobals {
 }
 
 
-public struct HTTPServer<Globals: HTTPServerGlobals> {
+public final class HTTPServer<Globals: HTTPServerGlobals> {
+
+	/// Creates a server object and stores a config object that will be subsequently passed to each newly created HTTPHandler. The config object is opaque to the server and can be anything.
+	public init(globals: Globals) {
+		self.globals = globals
+	}
+
 
 	/// Adds a GET route
 	@discardableResult
-	public mutating func get(path: String, handler: @escaping (_ handler: HTTPHandler<Globals>) async throws -> HTTPResponse) -> Self {
+	public func get(path: String, handler: @escaping (_ handler: HTTPHandler<Globals>) async throws -> HTTPResponse) -> Self {
 		router.add(method: .GET, path: path, callback: .get(callback: handler))
 		return self
 	}
@@ -30,7 +36,7 @@ public struct HTTPServer<Globals: HTTPServerGlobals> {
 
 	/// Adds a POST route that assumes the request body should contain a JSON object of type `type`
 	@discardableResult
-	public mutating func post<T: Decodable>(path: String, type: T.Type, callback: @escaping (_ handler: HTTPHandler<Globals>, _ object: T) async throws -> HTTPResponse) -> Self {
+	public func post<T: Decodable>(path: String, type: T.Type, callback: @escaping (_ handler: HTTPHandler<Globals>, _ object: T) async throws -> HTTPResponse) -> Self {
 		router.add(method: .POST, path: path, callback: .jsonBody(type: type, callback: { try await callback($0, $1 as! T) } ))
 		return self
 	}
@@ -38,7 +44,7 @@ public struct HTTPServer<Globals: HTTPServerGlobals> {
 
 	/// Adds a PUT route that assumes the request body should contain a JSON object of type `type`
 	@discardableResult
-	public mutating func put<T: Decodable>(path: String, type: T.Type, callback: @escaping (_ handler: HTTPHandler<Globals>, _ object: T) async throws -> HTTPResponse) -> Self {
+	public func put<T: Decodable>(path: String, type: T.Type, callback: @escaping (_ handler: HTTPHandler<Globals>, _ object: T) async throws -> HTTPResponse) -> Self {
 		router.add(method: .PUT, path: path, callback: .jsonBody(type: type, callback: { try await callback($0, $1 as! T) } ))
 		return self
 	}
@@ -46,7 +52,7 @@ public struct HTTPServer<Globals: HTTPServerGlobals> {
 
 	/// Adds a PATCH route that assumes the request body should contain a JSON object of type `type`
 	@discardableResult
-	public mutating func patch<T: Decodable>(path: String, type: T.Type, callback: @escaping (_ handler: HTTPHandler<Globals>, _ object: T) async throws -> HTTPResponse) -> Self {
+	public func patch<T: Decodable>(path: String, type: T.Type, callback: @escaping (_ handler: HTTPHandler<Globals>, _ object: T) async throws -> HTTPResponse) -> Self {
 		router.add(method: .PATCH, path: path, callback: .jsonBody(type: type, callback: { try await callback($0, $1 as! T) } ))
 		return self
 	}
@@ -54,7 +60,7 @@ public struct HTTPServer<Globals: HTTPServerGlobals> {
 
 	/// Adds a DELETE route
 	@discardableResult
-	public mutating func delete(path: String, handler: @escaping (_ handler: HTTPHandler<Globals>) async throws -> HTTPResponse) -> Self {
+	public func delete(path: String, handler: @escaping (_ handler: HTTPHandler<Globals>) async throws -> HTTPResponse) -> Self {
 		router.add(method: .DELETE, path: path, callback: .get(callback: handler))
 		return self
 	}

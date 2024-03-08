@@ -22,7 +22,14 @@ func runServer() throws {
 #endif
 
 	let globals = try Globals(path: configPath)
-	Log.info(globals.bindAddress.description)
+
+	try HTTPServer(globals: globals)
+
+		.get(path: "/version") { handler in
+			HTTPResponse(Version())
+		}
+
+		.run()
 }
 
 

@@ -26,7 +26,7 @@ public struct HTTPResponse {
 	}
 
 
-	public init<T: Encodable>(status: HTTPResponseStatus = .ok, object: T) {
+	public init<T: Encodable>(status: HTTPResponseStatus = .ok, _ object: T) {
 		self.status = status
 		self.mime = "application/json"
 		self.object = object
@@ -51,7 +51,7 @@ public struct HTTPErrorResponse: Error {
 			let code: String
 			let message: String?
 		}
-		wrapped = .init(status: status, object: Response(code: code, message: message))
+		wrapped = .init(status: status, Response(code: code, message: message))
 	}
 
 
