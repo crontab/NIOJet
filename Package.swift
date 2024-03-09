@@ -47,6 +47,7 @@ let package = Package(
             name: "NIOJetDemo",
 			dependencies: [
 				"NIOJet",
+				"MySQLNIOEx"
 			],
 			exclude: ["demo-init.sql"]
 		),

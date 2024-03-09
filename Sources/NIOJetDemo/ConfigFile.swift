@@ -1,6 +1,6 @@
 //
 //  ConfigFile.swift
-//  NIOJet
+//  NIOJetDemo
 //
 //  Created by Hovik Melikyan on 08.03.24.
 //
@@ -9,6 +9,7 @@ import Foundation
 import NIOJet
 
 
+/// A simplified INI file parser
 final class ConfigFile {
 
 	private let baseDir: URL

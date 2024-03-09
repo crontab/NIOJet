@@ -13,6 +13,19 @@ import AsyncKit
 //  Based on MySQLKit's MySQLConnectionSource
 
 
+public extension EventLoopGroupConnectionPool<MySQLConnectionSource> {
+
+	// Convenience shortcut
+	func withDBConnection<Result>(eventLoop: EventLoop, _ closure: @escaping (MySQLConnectionSource.Connection) async throws -> Result) async throws -> Result {
+		try await pool(for: eventLoop).withConnection { conn in
+			eventLoop.makeFutureWithTask {
+				try await closure(conn)
+			}
+		}.get()
+	}
+}
+
+
 public struct MySQLConfiguration {
 	public let address: () throws -> SocketAddress
 	public let username: String

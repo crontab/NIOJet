@@ -13,6 +13,7 @@ import NIOHTTP1
 public final class HTTPHandler<Globals>: ChannelInboundHandler {
 
 	public let globals: Globals
+	public var eventLoop: EventLoop { context.eventLoop }
 
 	public private(set) var requestHead: HTTPRequestHead?
 	public private(set) var requestData: ByteBuffer?
@@ -33,6 +34,7 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 	public typealias InboundIn = HTTPServerRequestPart
 	public typealias OutboundOut = HTTPServerResponsePart
 
+	private var context: ChannelHandlerContext! // kind of guaranteed
 	private let router: HTTPRouter<Globals>
 	private lazy var queryItems: [String: String] = [:]
 	private var matchGroups: [Substring] = []
@@ -49,6 +51,9 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 
 
 	public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
+		
+		self.context = context
+
 		switch unwrapInboundIn(data) {
 
 			// MARK: HEAD

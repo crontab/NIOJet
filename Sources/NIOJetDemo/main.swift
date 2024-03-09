@@ -14,6 +14,14 @@ struct Version: Encodable {
 }
 
 
+struct Quote: Codable {
+	var id: Int
+	var text: String
+	var author: String?
+	var createdAt: Date
+}
+
+
 func runServer() throws {
 #if DEBUG
 	let configPath = URL(string: "../../etc/demo.conf", relativeTo: URL(fileURLWithPath: #file))!.path
@@ -25,8 +33,24 @@ func runServer() throws {
 
 	try HTTPServer(globals: globals)
 
-		.get(path: "/version") { handler in
+		.get(path: "/version") { _ in
 			HTTPResponse(Version())
+		}
+
+		.get(path: "/quotes") { handler in
+			try await handler.withDBConnection { conn in
+				HTTPResponse(try await conn.query(type: Quote.self, "SELECT * FROM quotes", binds: []))
+			}
+		}
+
+		.get(path: "^/quotes/([0-9]+)$") { handler in
+			try await handler.withDBConnection { conn in
+				let result = try await conn.query(type: Quote.self, "SELECT * FROM quotes WHERE id = ?", binds: [handler.matchInt64(1)]).first
+				guard let result else {
+					throw HTTPErrorResponse.notFound()
+				}
+				return HTTPResponse(result)
+			}
 		}
 
 		.run()

@@ -11,6 +11,13 @@ import MySQLNIO
 
 public extension MySQLConnection {
 
+	func query<T: Decodable>(type: T.Type, _ sql: String, binds: [Any?]) async throws -> [T] {
+		let decoder = MySQLDecoder()
+		return try await query(sql, binds: binds).map {
+			try decoder.decode(type, from: $0)
+		}
+	}
+
 
 	// MARK: MySQLRow-based methods
 
