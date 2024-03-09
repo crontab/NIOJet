@@ -79,7 +79,7 @@ private struct KeyedContainer<Key: CodingKey>: KeyedDecodingContainerProtocol {
 
 	@inline(__always)
 	private func ensure<T>(key: Key, data: MySQLData, value: T?) throws -> T {
-		guard let value = value else {
+		guard let value else {
 			throw typeMismatch(T.self, key: key, data: data)
 		}
 		return value
@@ -288,7 +288,7 @@ private struct SingleValueContainer: SingleValueDecodingContainer {
 
 	@inline(__always)
 	private func ensure<T>(_ value: T?) throws -> T {
-		guard let value = value else {
+		guard let value else {
 			throw typeMismatch(T.self, data: data)
 		}
 		return value
@@ -353,7 +353,7 @@ private extension MySQLData {
 		guard self.type == .json else {
 			return nil
 		}
-		guard let buffer = self.buffer else {
+		guard let buffer else {
 			return nil
 		}
 		return try decoder.decode(Value.self, from: buffer)
