@@ -10,7 +10,7 @@ import NIOJet
 
 
 struct Version: Encodable {
-	let version = Globals.versionString
+	let version: String
 }
 
 
@@ -34,12 +34,12 @@ func runServer() throws {
 	try HTTPServer(globals: globals)
 
 		.get(path: "/version") { _ in
-			HTTPResponse(Version())
+			Version(version: Globals.versionString)
 		}
 
 		.get(path: "/quotes") { handler in
 			try await handler.withDBConnection { conn in
-				HTTPResponse(try await conn.query(type: Quote.self, "SELECT * FROM quotes", binds: []))
+				try await conn.query(type: Quote.self, "SELECT * FROM quotes", binds: [])
 			}
 		}
 
@@ -47,9 +47,9 @@ func runServer() throws {
 			try await handler.withDBConnection { conn in
 				let result = try await conn.query(type: Quote.self, "SELECT * FROM quotes WHERE id = ?", binds: [handler.matchInt64(1)]).first
 				guard let result else {
-					throw HTTPErrorResponse.notFound()
+					throw ErrorResponse.notFound()
 				}
-				return HTTPResponse(result)
+				return result
 			}
 		}
 

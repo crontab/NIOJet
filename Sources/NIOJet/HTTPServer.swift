@@ -28,7 +28,7 @@ public final class HTTPServer<Globals: HTTPServerGlobals> {
 
 	/// Adds a GET route
 	@discardableResult
-	public func get(path: String, handler: @escaping (_ handler: HTTPHandler<Globals>) async throws -> HTTPResponse) -> Self {
+	public func get(path: String, handler: @escaping (_ handler: HTTPHandler<Globals>) async throws -> Encodable) -> Self {
 		router.add(method: .GET, path: path, callback: .get(callback: handler))
 		return self
 	}
@@ -36,7 +36,7 @@ public final class HTTPServer<Globals: HTTPServerGlobals> {
 
 	/// Adds a POST route that assumes the request body should contain a JSON object of type `type`
 	@discardableResult
-	public func post<T: Decodable>(path: String, type: T.Type, callback: @escaping (_ handler: HTTPHandler<Globals>, _ object: T) async throws -> HTTPResponse) -> Self {
+	public func post<T: Decodable>(path: String, type: T.Type, callback: @escaping (_ handler: HTTPHandler<Globals>, _ object: T) async throws -> Encodable) -> Self {
 		router.add(method: .POST, path: path, callback: .jsonBody(type: type, callback: { try await callback($0, $1 as! T) } ))
 		return self
 	}
@@ -44,7 +44,7 @@ public final class HTTPServer<Globals: HTTPServerGlobals> {
 
 	/// Adds a PUT route that assumes the request body should contain a JSON object of type `type`
 	@discardableResult
-	public func put<T: Decodable>(path: String, type: T.Type, callback: @escaping (_ handler: HTTPHandler<Globals>, _ object: T) async throws -> HTTPResponse) -> Self {
+	public func put<T: Decodable>(path: String, type: T.Type, callback: @escaping (_ handler: HTTPHandler<Globals>, _ object: T) async throws -> Encodable) -> Self {
 		router.add(method: .PUT, path: path, callback: .jsonBody(type: type, callback: { try await callback($0, $1 as! T) } ))
 		return self
 	}
@@ -52,7 +52,7 @@ public final class HTTPServer<Globals: HTTPServerGlobals> {
 
 	/// Adds a PATCH route that assumes the request body should contain a JSON object of type `type`
 	@discardableResult
-	public func patch<T: Decodable>(path: String, type: T.Type, callback: @escaping (_ handler: HTTPHandler<Globals>, _ object: T) async throws -> HTTPResponse) -> Self {
+	public func patch<T: Decodable>(path: String, type: T.Type, callback: @escaping (_ handler: HTTPHandler<Globals>, _ object: T) async throws -> Encodable) -> Self {
 		router.add(method: .PATCH, path: path, callback: .jsonBody(type: type, callback: { try await callback($0, $1 as! T) } ))
 		return self
 	}
@@ -60,7 +60,7 @@ public final class HTTPServer<Globals: HTTPServerGlobals> {
 
 	/// Adds a DELETE route
 	@discardableResult
-	public func delete(path: String, handler: @escaping (_ handler: HTTPHandler<Globals>) async throws -> HTTPResponse) -> Self {
+	public func delete(path: String, handler: @escaping (_ handler: HTTPHandler<Globals>) async throws -> Encodable) -> Self {
 		router.add(method: .DELETE, path: path, callback: .get(callback: handler))
 		return self
 	}

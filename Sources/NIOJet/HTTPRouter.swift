@@ -13,8 +13,8 @@ import NIOHTTP1
 internal struct HTTPRouter<Globals> {
 
 	enum Callback {
-		typealias GetCallback = (_ handler: HTTPHandler<Globals>) async throws -> HTTPResponse
-		typealias JSONCallback = (_ handler: HTTPHandler<Globals>, _ object: Decodable) async throws -> HTTPResponse
+		typealias GetCallback = (_ handler: HTTPHandler<Globals>) async throws -> Encodable
+		typealias JSONCallback = (_ handler: HTTPHandler<Globals>, _ object: Decodable) async throws -> Encodable
 
 		case get(callback: GetCallback)
 		case jsonBody(type: Decodable.Type, callback: JSONCallback)
@@ -46,9 +46,9 @@ internal struct HTTPRouter<Globals> {
 			if let match = methodRoutes.match(path: path) {
 				return match
 			}
-			throw HTTPErrorResponse(status: .notFound, code: "path_not_found")
+			throw ErrorResponse.notFound()
 		}
-		throw HTTPErrorResponse(status: .methodNotAllowed, code: "invalid_method")
+		throw ErrorResponse.methodNotAllowed()
 	}
 
 

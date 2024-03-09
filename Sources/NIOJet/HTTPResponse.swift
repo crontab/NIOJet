@@ -14,66 +14,90 @@ import NIOFoundationCompat
 // MARK: - HTTPResponse
 
 public struct HTTPResponse {
-	let status: HTTPResponseStatus
+	let status: Int
 	let mime: String?
 	private let object: Encodable?
 
 
-	public init(status: HTTPResponseStatus = .ok, mime: String? = nil) {
+	public init(status: Int = 200, mime: String? = nil) {
 		self.status = status
 		self.mime = mime
 		self.object = nil
 	}
 
 
-	public init<T: Encodable>(status: HTTPResponseStatus = .ok, _ object: T) {
+	public init<T: Encodable>(status: Int = 200, object: T?) {
 		self.status = status
 		self.mime = "application/json"
 		self.object = object
 	}
 
 
-	internal func encode(with allocator: ByteBufferAllocator) throws -> ByteBuffer? {
+	public init(error: ErrorResponse) {
+		self.init(status: error.status, object: error)
+	}
+
+
+	func encode(with allocator: ByteBufferAllocator) throws -> ByteBuffer? {
 		try object?.jsonEncode(allocator: allocator)
 	}
 }
 
 
-// MARK: - HTTPErrorResponse
+// MARK: - ErrorResponse
 
-public struct HTTPErrorResponse: Error {
+public struct ErrorResponse: Encodable, LocalizedError {
+	public let status: Int
+	public let code: String
+	public let message: String?
 
-	let wrapped: HTTPResponse
 
-
-	public init(status: HTTPResponseStatus, code: String, message: String? = nil) {
-		struct Response: Encodable {
-			let code: String
-			let message: String?
-		}
-		wrapped = .init(status: status, Response(code: code, message: message))
+	public var errorDescription: String? {
+		"\(message ?? "Error") (\(status) \(code))"
 	}
 
 
-	public static func `internal`(code: String = "internal_error", message: String? = nil) -> HTTPErrorResponse {
+	// Frequently used responses:
+
+	public static func badRequest(message: String? = nil) -> ErrorResponse {
+		Self.init(status: 400, code: "invalid_request", message: message)
+	}
+
+
+	public static func unauthorized(message: String? = nil) -> ErrorResponse {
+		Self.init(status: 401, code: "unauthorized", message: message)
+	}
+
+
+	public static func forbidden(message: String? = nil) -> ErrorResponse {
+		Self.init(status: 403, code: "forbidden", message: message)
+	}
+
+
+	public static func notFound(message: String? = nil) -> ErrorResponse {
+		Self.init(status: 404, code: "not_found", message: message)
+	}
+
+
+	public static func methodNotAllowed(message: String? = nil) -> ErrorResponse {
+		Self.init(status: 405, code: "invalid_method", message: message)
+	}
+
+
+	public static func conflict(message: String? = nil) -> ErrorResponse {
+		Self.init(status: 409, code: "conflict", message: message)
+	}
+
+
+	public static func `internal`(message: String? = nil) -> ErrorResponse {
 		Log.error("Internal error, \(message ?? "-")")
-		return Self(status: .internalServerError, code: code, message: message)
+		return Self(status: 500, code: "internal_error", message: message)
 	}
 
 
-	public static func notImpl(code: String = "not_implemented", message: String? = nil) -> HTTPErrorResponse {
-		Log.error("Internal error, \(message ?? "Feature not implemented yet")")
-		return Self(status: .internalServerError, code: code, message: message)
-	}
-
-
-	public static func notFound(message: String? = nil) -> HTTPErrorResponse {
-		Self.init(status: .notFound, code: "not_found", message: message)
-	}
-
-
-	public static func badRequest(message: String? = nil) -> HTTPErrorResponse {
-		Self.init(status: .badRequest, code: "invalid_found", message: message)
+	public static func notImpl(message: String? = nil) -> ErrorResponse {
+		Log.error("Not implemented, \(message ?? "-")")
+		return Self(status: 501, code: "not_implemented", message: message ?? "Feature not implemented yet")
 	}
 }
 

@@ -106,11 +106,11 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 					try await route()
 				}
 				future.whenSuccess { [self] response in
-					emit(context: context, response: response)
+					emit(response)
 				}
 				future.whenFailure { [self] error in
-					let error = error as? HTTPErrorResponse ?? .internal(message: error.localizedDescription)
-					emit(context: context, response: error.wrapped)
+					let error = error as? ErrorResponse ?? .internal(message: error.localizedDescription)
+					emit(HTTPResponse(error: error))
 				}
 				future.whenComplete { _ in
 					if !requestHead.isKeepAlive {
@@ -131,12 +131,13 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 		}
 
 		switch callback {
+
 			case .get(callback: let callback):
-				return try await callback(self)
+				return HTTPResponse(object: try await callback(self))
 
 			case .jsonBody(type: let type, callback: let callback):
 				guard let requestData else {
-					throw HTTPErrorResponse(status: .badRequest, code: "bad_request", message: "Invalid request body: \(String(describing: type)) expected")
+					throw ErrorResponse.badRequest(message: "Invalid request body: \(String(describing: type)) expected")
 				}
 
 				let object: Decodable
@@ -155,15 +156,17 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 						default:
 							descr = error.localizedDescription
 					}
-					throw HTTPErrorResponse(status: .badRequest, code: "json_error", message: "JSON error: \(descr)")
+					throw ErrorResponse.badRequest(message: "JSON error: \(descr)")
 				}
 
-				return try await callback(self, object)
+				return HTTPResponse(object: try await callback(self, object))
 		}
 	}
 
 
-	private func emit(context: ChannelHandlerContext, response: HTTPResponse, ignoreExceptions: Bool = false) {
+	private func emit(_ response: HTTPResponse, ignoreExceptions: Bool = false) {
+		guard let context else { preconditionFailure() }
+
 		guard !headersSent else {
 			Log.warning("Headers already sent")
 			return
@@ -172,7 +175,7 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 		do {
 			let buffer = try response.encode(with: context.channel.allocator)
 
-			var head = HTTPResponseHead(version: responseHTTPVersion, status: response.status)
+			var head = HTTPResponseHead(version: responseHTTPVersion, status: .init(statusCode: response.status))
 			head.headers.replaceOrAdd(name: "content-length", value: String(buffer?.writerIndex ?? 0))
 			response.mime.map {
 				head.headers.replaceOrAdd(name: "content-type", value: $0)
@@ -191,7 +194,7 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 				context.close(promise: nil)
 			}
 			else {
-				emit(context: context, response: HTTPErrorResponse.internal(message: error.localizedDescription).wrapped, ignoreExceptions: true)
+				emit(HTTPResponse(error: .internal(message: error.localizedDescription)), ignoreExceptions: true)
 			}
 		}
 	}
