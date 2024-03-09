@@ -13,7 +13,7 @@ import NIOHTTP1
 public final class HTTPHandler<Globals>: ChannelInboundHandler {
 
 	public let globals: Globals
-	public var eventLoop: EventLoop { context.eventLoop }
+	public var eventLoop: EventLoop
 
 	public private(set) var requestHead: HTTPRequestHead?
 	public private(set) var requestData: ByteBuffer?
@@ -34,7 +34,6 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 	public typealias InboundIn = HTTPServerRequestPart
 	public typealias OutboundOut = HTTPServerResponsePart
 
-	private var context: ChannelHandlerContext! // kind of guaranteed
 	private let router: HTTPRouter<Globals>
 	private lazy var queryItems: [String: String] = [:]
 	private var matchGroups: [Substring] = []
@@ -44,16 +43,14 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 	private var routerError: Error? = nil
 
 
-	init(router: HTTPRouter<Globals>, globals: Globals) {
+	init(router: HTTPRouter<Globals>, globals: Globals, eventLoop: EventLoop) {
 		self.router = router
 		self.globals = globals
+		self.eventLoop = eventLoop
 	}
 
 
 	public func channelRead(context: ChannelHandlerContext, data: NIOAny) {
-		
-		self.context = context
-
 		switch unwrapInboundIn(data) {
 
 			// MARK: HEAD
@@ -106,11 +103,11 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 					try await route()
 				}
 				future.whenSuccess { [self] response in
-					emit(response)
+					emit(response, context: context)
 				}
 				future.whenFailure { [self] error in
 					let error = error as? ErrorResponse ?? .internal(message: error.localizedDescription)
-					emit(HTTPResponse(error: error))
+					emit(HTTPResponse(error: error), context: context)
 				}
 				future.whenComplete { _ in
 					if !requestHead.isKeepAlive {
@@ -164,9 +161,7 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 	}
 
 
-	private func emit(_ response: HTTPResponse, ignoreExceptions: Bool = false) {
-		guard let context else { preconditionFailure() }
-
+	private func emit(_ response: HTTPResponse, context: ChannelHandlerContext, ignoreExceptions: Bool = false) {
 		guard !headersSent else {
 			Log.warning("Headers already sent")
 			return
@@ -194,7 +189,7 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 				context.close(promise: nil)
 			}
 			else {
-				emit(HTTPResponse(error: .internal(message: error.localizedDescription)), ignoreExceptions: true)
+				emit(HTTPResponse(error: .internal(message: error.localizedDescription)), context: context, ignoreExceptions: true)
 			}
 		}
 	}

@@ -92,7 +92,7 @@ public final class HTTPServer<Globals: HTTPServerGlobals> {
 			.childChannelOption(ChannelOptions.maxMessagesPerRead, value: 1)
 			.childChannelInitializer { channel in
 				channel.pipeline.configureHTTPServerPipeline().flatMap {
-					channel.pipeline.addHandler(HTTPHandler(router: self.router, globals: self.globals))
+					channel.pipeline.addHandler(HTTPHandler(router: self.router, globals: self.globals, eventLoop: channel.eventLoop))
 				}
 			}
 
