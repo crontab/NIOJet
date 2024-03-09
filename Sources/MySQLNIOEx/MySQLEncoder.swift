@@ -1,6 +1,6 @@
 //
 //  MySQLEncoder.swift
-//  NIOMySQLEx
+//  MySQLNIOEx
 //
 //  Created by Hovik Melikyan on 09.03.24.
 //

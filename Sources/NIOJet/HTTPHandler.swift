@@ -96,12 +96,10 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 					return
 				}
 
-				// This is where our async world enters the future world
-				let promise = context.eventLoop.makePromise(of: HTTPResponse.self)
-				promise.completeWithTask { [self] in
+				// This is where our async world enters the future world (or the other way around?)
+				let future = context.eventLoop.makeFutureWithTask { [self] in
 					try await route()
 				}
-				let future = promise.futureResult
 				future.whenSuccess { [self] response in
 					emit(context: context, response: response)
 				}
