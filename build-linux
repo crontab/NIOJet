@@ -1,0 +1,21 @@
+#!/bin/bash
+
+EXEC_NAME="NIOJetDemo"
+DOCKER_IMAGE="swift:latest"
+BUILD_CONFIG="release"
+BUILD_OPTS="-c $BUILD_CONFIG"
+TAR_NAME="$EXEC_NAME-linux.tgz"
+
+# Launch docker if we are on the host platform and run this same script recursively
+# The build & copy commands will be executed inside the container
+
+if [ -z "$SWIFT_PLATFORM" ] ; then
+	rm -rf .build/install .build/"$TAR_NAME"
+	docker run --rm -v "$PWD:/code" -w /code --platform linux/amd64 -e QEMU_CPU=max "$DOCKER_IMAGE" /bin/bash "$0"
+	(cd .build/install && tar czf ../"$TAR_NAME" . && echo "Archive created under .build")
+else
+	swift build $BUILD_OPTS && \
+		mkdir -p .build/install/lib && \
+		cp -P .build/"$BUILD_CONFIG"/"$EXEC_NAME" .build/install/ && \
+		cp -P /usr/lib/swift/linux/lib*so* .build/install/lib/
+fi
