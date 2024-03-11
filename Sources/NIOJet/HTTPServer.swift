@@ -69,60 +69,65 @@ public final class HTTPServer<Globals: HTTPServerGlobals> {
 	/// Runs the service; should be called after routes are addded. Returns only after a graceful shutdown, i.e. when SIGINT is received.
 	public func run() throws {
 		let group = globals.eventLoopGroup
-		let quiesce = ServerQuiescingHelper(group: group)
-		let signalQueue = DispatchQueue(label: "io.NIOJet.signalHandlingQueue")
-		let signalSource = DispatchSource.makeSignalSource(signal: SIGINT, queue: signalQueue)
-		let fullyShutdownPromise: EventLoopPromise<Void> = group.next().makePromise()
-		signalSource.setEventHandler {
-			signalSource.cancel()
-			Log.info("Received signal, initiating shutdown.")
-			quiesce.initiateShutdown(promise: fullyShutdownPromise)
-		}
-		signal(SIGINT, SIG_IGN)
-		signalSource.resume()
 
-		let bootstrap = ServerBootstrap(group: group)
-			.serverChannelOption(ChannelOptions.backlog, value: 256)
-			.serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
-			.serverChannelInitializer { channel in
-				channel.pipeline.addHandler(quiesce.makeServerChannelHandler(channel: channel))
-			}
-			.childChannelOption(ChannelOptions.socketOption(.tcp_nodelay), value: 1)
-			.childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
-			.childChannelOption(ChannelOptions.maxMessagesPerRead, value: 1)
-			.childChannelInitializer { channel in
-				channel.pipeline.configureHTTPServerPipeline().flatMap {
-					channel.pipeline.addHandler(HTTPHandler(router: self.router, globals: self.globals, eventLoop: channel.eventLoop))
-				}
-			}
-
+		// This nested block is necessary to ensure that the destructor for `quiesce` is called before the final call to group.syncShutdownGracefully()
 		do {
-			if let path = globals.bindAddress.pathname {
-				// Delete the previous socket file
-				try? FileManager.default.removeItem(atPath: path)
+			let quiesce = ServerQuiescingHelper(group: group)
+			let signalQueue = DispatchQueue(label: "io.NIOJet.signalHandlingQueue")
+			let signalSource = DispatchSource.makeSignalSource(signal: SIGINT, queue: signalQueue)
+			let fullyShutdownPromise: EventLoopPromise<Void> = group.next().makePromise()
+			signalSource.setEventHandler {
+				signalSource.cancel()
+				Log.info("Received signal, initiating shutdown.")
+				quiesce.initiateShutdown(promise: fullyShutdownPromise)
+			}
+			signal(SIGINT, SIG_IGN)
+			signalSource.resume()
+
+			let bootstrap = ServerBootstrap(group: group)
+				.serverChannelOption(ChannelOptions.backlog, value: 256)
+				.serverChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
+				.serverChannelInitializer { channel in
+					channel.pipeline.addHandler(quiesce.makeServerChannelHandler(channel: channel))
+				}
+				.childChannelOption(ChannelOptions.socketOption(.tcp_nodelay), value: 1)
+				.childChannelOption(ChannelOptions.socketOption(.so_reuseaddr), value: 1)
+				.childChannelOption(ChannelOptions.maxMessagesPerRead, value: 1)
+				.childChannelInitializer { channel in
+					channel.pipeline.configureHTTPServerPipeline().flatMap {
+						channel.pipeline.addHandler(HTTPHandler(router: self.router, globals: self.globals, eventLoop: channel.eventLoop))
+					}
+				}
+
+			do {
+				if let path = globals.bindAddress.pathname {
+					// Delete the previous socket file
+					try? FileManager.default.removeItem(atPath: path)
+				}
+
+				// Bind the socket
+				let server = try bootstrap.bind(to: globals.bindAddress).wait()
+
+				if let path = globals.bindAddress.pathname {
+					// Set the socket file permissions to 777, otherwise Nginx can't open it even if run as root
+					try FileManager.default.setAttributes([.posixPermissions: NSNumber(0o777)], ofItemAtPath: path)
+				}
+
+				// Wait forever, or until Ctrl-C (SIGINT)
+				Log.info("Server is running on \(globals.bindAddress.description), pid=\(getpid())")
+				try server.closeFuture.wait()
 			}
 
-			// Bind the socket
-			let server = try bootstrap.bind(to: globals.bindAddress).wait()
-
-			if let path = globals.bindAddress.pathname {
-				// Set the socket file permissions to 777, otherwise Nginx can't open it even if run as root
-				try FileManager.default.setAttributes([.posixPermissions: NSNumber(0o777)], ofItemAtPath: path)
+			catch {
+				globals.shutdown()
+				try group.syncShutdownGracefully()
+				throw ServerError.bindFailed(message: "Bind failed, shutting down the server - \(error.localizedDescription)")
 			}
 
-			// Wait forever, or until Ctrl-C (SIGINT)
-			Log.info("Server is running on \(globals.bindAddress.description), pid=\(getpid())")
-			try server.closeFuture.wait()
-		}
-
-		catch {
+			try fullyShutdownPromise.futureResult.wait()
 			globals.shutdown()
-			try group.syncShutdownGracefully()
-			throw ServerError.bindFailed(message: "Bind failed, shutting down the server - \(error.localizedDescription)")
 		}
 
-		try fullyShutdownPromise.futureResult.wait()
-		globals.shutdown()
 		try group.syncShutdownGracefully()
 	}
 
