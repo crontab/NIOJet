@@ -10,9 +10,10 @@ TAR_NAME="$EXEC_NAME-linux.tgz"
 # The build & copy commands will be executed inside the container
 
 if [ -z "$SWIFT_PLATFORM" ] ; then
-	rm -rf .build/install .build/"$TAR_NAME"
+	rm -rf .build/install
+	rm -f .build/"$TAR_NAME"
 	docker run --rm -v "$PWD:/code" -w /code --platform linux/amd64 "$DOCKER_IMAGE" /bin/bash "$0"
-	(cd .build/install && tar czf ../"$TAR_NAME" . && echo "Archive created under .build")
+	(cd .build/install && tar czf ../"$TAR_NAME" . && echo "Archive created: .build/"$TAR_NAME"")
 else
 	swift build $BUILD_OPTS && \
 		mkdir -p .build/install/lib && \
