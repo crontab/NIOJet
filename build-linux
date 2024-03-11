@@ -11,7 +11,7 @@ TAR_NAME="$EXEC_NAME-linux.tgz"
 
 if [ -z "$SWIFT_PLATFORM" ] ; then
 	rm -rf .build/install .build/"$TAR_NAME"
-	docker run --rm -v "$PWD:/code" -w /code --platform linux/amd64 -e QEMU_CPU=max "$DOCKER_IMAGE" /bin/bash "$0"
+	docker run --rm -v "$PWD:/code" -w /code --platform linux/amd64 "$DOCKER_IMAGE" /bin/bash "$0"
 	(cd .build/install && tar czf ../"$TAR_NAME" . && echo "Archive created under .build")
 else
 	swift build $BUILD_OPTS && \

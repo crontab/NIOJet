@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS quotes (
   PRIMARY KEY (id)
 ) ENGINE=InnoDB;
 
-INSERT IGNORE INTO quotes (id, text, author, display_options, price)
+INSERT IGNORE INTO quotes (id, text, author, displayOptions, price)
 VALUES
 	(1, 'Experience is the name everyone gives to their mistakes.', 'Oscar Wilde', '{\"centered\": true}', NULL),
 	(2, 'Sometimes it pays to stay in bed on Monday, rather than spending the rest of the week debugging Monday’s code.', 'Dan Salomon', NULL, 14.99),

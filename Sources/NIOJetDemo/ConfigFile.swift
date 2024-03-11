@@ -82,9 +82,10 @@ final class ConfigFile {
 
 	/// Returns a file path for the specified file name, located at `../etc/<name>` relative to the executable path.
 	static func defaultFile(named: String) -> String {
-		let execPath = ProcessInfo.processInfo.arguments[0] // Swift seems to always return the full path
-		precondition(execPath.hasPrefix("/"))
-		var comps = execPath.components(separatedBy: "/").dropLast(2) // drop the executable name and its directory, typically `bin`
+		let exec = ProcessInfo.processInfo.arguments[0]
+		let pwd = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+		let execPath = URL(fileURLWithPath: exec, relativeTo: pwd)
+		var comps = execPath.pathComponents.dropLast(2) // drop the executable name and its directory, typically `bin`
 		if comps.isEmpty { // root directory?
 			comps = [""]
 		}
