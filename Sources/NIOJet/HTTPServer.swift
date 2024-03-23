@@ -12,6 +12,7 @@ import NIOExtras
 
 public protocol HTTPServerGlobals {
 	var bindAddress: SocketAddress { get }
+	var maxHTTPBody: Int { get }
 	var eventLoopGroup: EventLoopGroup { get }
 
 	func shutdown()

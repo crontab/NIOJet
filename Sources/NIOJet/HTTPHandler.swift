@@ -10,7 +10,7 @@ import NIO
 import NIOHTTP1
 
 
-public final class HTTPHandler<Globals>: ChannelInboundHandler {
+public final class HTTPHandler<Globals: HTTPServerGlobals>: ChannelInboundHandler {
 
 	public let globals: Globals
 	public var eventLoop: EventLoop
@@ -66,8 +66,7 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 
 				let contentLength = head.headers["content-length"].first.flatMap(Int.init) ?? 0
 
-				// TODO: the limit should come from the config
-				if contentLength > 1_000_000 {
+				if contentLength > globals.maxHTTPBody {
 					context.close(promise: nil)
 					return
 				}
@@ -88,6 +87,7 @@ public final class HTTPHandler<Globals>: ChannelInboundHandler {
 
 			// MARK: BODY
 			case .body(var data):
+				// TODO: check for buffer growing too big
 				requestData?.writeBuffer(&data)
 
 

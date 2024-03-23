@@ -16,6 +16,7 @@ final class Globals: HTTPServerGlobals {
 	// Protocol implementation
 	let eventLoopGroup: EventLoopGroup
 	let bindAddress: SocketAddress
+	let maxHTTPBody: Int
 
 	// Demo project-sepcific globals
 	let dbPool: EventLoopGroupConnectionPool<MySQLConnectionSource>
@@ -35,6 +36,8 @@ final class Globals: HTTPServerGlobals {
 		else {
 			self.bindAddress = try SocketAddress.makeAddressResolvingHost("localhost", port: 8080)
 		}
+
+		self.maxHTTPBody = file["main", "max_http_body", 1_000_000]
 
 		// NB: the number of connections per event loop is 1 by default; can be changed below
 		let source = MySQLConnectionSource(configuration: file.dbConfig(section: "db_main"))

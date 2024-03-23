@@ -10,7 +10,7 @@ import NIO
 import NIOHTTP1
 
 
-internal struct HTTPRouter<Globals> {
+internal struct HTTPRouter<Globals: HTTPServerGlobals> {
 
 	enum Callback {
 		typealias GetCallback = (_ handler: HTTPHandler<Globals>) async throws -> Encodable
