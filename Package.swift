@@ -15,11 +15,11 @@ let package = Package(
 	],
 
 	dependencies: [
-		.package(url: "https://github.com/apple/swift-nio.git", from: "2.64.0"),
-		.package(url: "https://github.com/apple/swift-nio-extras.git", from: "1.22.0"),
-		.package(url: "https://github.com/apple/swift-log.git", from: "1.5.4"),
-		.package(url: "https://github.com/vapor/async-kit.git", from: "1.19.0"),
-		.package(url: "https://github.com/vapor/mysql-nio.git", from: "1.7.1"),
+		.package(url: "https://github.com/apple/swift-nio.git", from: "2.86.0"),
+		.package(url: "https://github.com/apple/swift-nio-extras.git", from: "1.29.0"),
+		.package(url: "https://github.com/apple/swift-log.git", from: "1.6.4"),
+		.package(url: "https://github.com/vapor/async-kit.git", from: "1.21.0"),
+		.package(url: "https://github.com/vapor/mysql-nio.git", from: "1.8.0"),
 	],
 
 	targets: [

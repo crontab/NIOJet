@@ -100,7 +100,7 @@ internal struct HTTPRouter<Globals: HTTPServerGlobals> {
 }
 
 
-extension HTTPMethod: Hashable { }
+extension HTTPMethod: @retroactive Hashable { }
 
 
 private extension NSRegularExpression {

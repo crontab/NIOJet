@@ -55,7 +55,7 @@ public struct MySQLConfiguration {
 }
 
 
-extension MySQLConnection: ConnectionPoolItem { }
+extension MySQLConnection: @retroactive ConnectionPoolItem { }
 
 
 public struct MySQLConnectionSource: ConnectionPoolSource {
